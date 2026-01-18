@@ -48,7 +48,6 @@ class LR1Parser:
                         if symbol not in self.first_sets[left]:
                             self.first_sets[left].add(symbol)
                             changed = True
-                        all_epsilon = False
                         break
                     else:  # Non-terminal
                         # Add FIRST(non_terminal) to FIRST(left)
@@ -59,7 +58,6 @@ class LR1Parser:
                             changed = True
                         # If this non-terminal doesn't contain epsilon, stop
                         if 'ε' not in first_of_symbol:
-                            all_epsilon = False
                             break
     
     def first_of_string(self, string, lookahead):
@@ -173,7 +171,7 @@ class LR1Parser:
             processed.add(current_idx)
             
             current_itemset = self.itemsets[current_idx]
-            # print(f"\nProcessing I{current_idx} ({len(current_itemset)} items):")
+            print(f"\nProcessing I{current_idx} ({len(current_itemset)} items):")
             
             # Display items in this itemset
             for item in sorted(current_itemset):
@@ -183,7 +181,7 @@ class LR1Parser:
                 
                 # Create dotted production string
                 dotted_right = ' '.join(symbols[:dot_pos] + ['.'] + symbols[dot_pos:])
-                #print(f"  [{left} -> {dotted_right}, {lookahead}]")
+                print(f"  [{left} -> {dotted_right}, {lookahead}]")
             
             # Try all symbols (terminals and non-terminals)
             all_symbols = self.T + self.N
