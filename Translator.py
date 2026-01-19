@@ -36,7 +36,6 @@ class LR1Translator:
         self.intermediate_code.append(code)
     
     def compute_first_sets(self):
-        """Compute FIRST sets for all non-terminals"""
         for nt in self.N:
             self.first_sets[nt] = set()
         for t in self.T:
@@ -66,7 +65,6 @@ class LR1Translator:
                             break
     
     def first_of_string(self, string, lookahead):
-        """Compute FIRST of a string of symbols"""
         if not string:
             return {lookahead}
         
@@ -142,7 +140,6 @@ class LR1Translator:
         return self.closure(new_items) if new_items else set()
     
     def build_canonical_collection(self):
-        """Build the canonical collection of LR(1) itemsets"""
         initial_item = (0, 0, '$')
         I0 = self.closure({initial_item})
         self.itemsets = [I0]
@@ -175,7 +172,6 @@ class LR1Translator:
                         queue.append(found_idx)
     
     def build_parsing_table(self):
-        """Build LR(1) parsing table from canonical collection"""
         for i in range(len(self.itemsets)):
             self.parsing_table[i] = {}
             for terminal in self.T + ['$']:
@@ -223,9 +219,9 @@ class LR1Translator:
         step = 0
         while True:
             current_state = stack[-1]
-            current_input = input_list[position]
+            current_input = input_list[position] # ['a','+','a','*','a','$']
             
-            action = self.parsing_table[current_state].get(current_input, '')
+            action = self.parsing_table[current_state].get(current_input, '') # rX sau sX
             
             if not action:
                 return None
@@ -249,7 +245,7 @@ class LR1Translator:
                 left, right = self.P[prod_num]
                 rhs_length = len(right)
                 
-                stack = stack[:-rhs_length]
+                stack = stack[:-rhs_length] #pop
                 
                 if prod_num == 1:  # E -> E + T
                     t_val = attr_stack.pop()
@@ -338,9 +334,31 @@ def main():
                     print(f"  {i}. {line}")
             else:
                 print("  (no intermediate code - direct value)")
-        else:
-            print("  ERROR: Translation failed")
         print("-" * 80)
 
 if __name__ == "__main__":
     main()
+
+# Pas   Stivă (înainte)                          Input          Stare  Simbol  Operație                     Stivă (după)                         Cod Intermediar
+# 1     $0                                      a₁+a₂*a₃$       0      a₁      SHIFT 5                     $0 a₁ 5                             -
+# 2a    $0 a₁ 5                                 +a₂*a₃$         5      +       REDUCE 6 (F→a)              $0                                  -
+# 2b    $0                                      +a₂*a₃$         0      +       GOTO(0, F) = 3              $0 F 3                              -
+# 3a    $0 F 3                                  +a₂*a₃$         3      +       REDUCE 4 (T→F)              $0                                  -
+# 3b    $0                                      +a₂*a₃$         0      +       GOTO(0, T) = 2              $0 T 2                              -
+# 4a    $0 T 2                                  +a₂*a₃$         2      +       REDUCE 2 (E→T)              $0                                  -
+# 4b    $0                                      +a₂*a₃$         0      +       GOTO(0, E) = 1              $0 E 1                              -
+# 5     $0 E 1                                  +a₂*a₃$         1      +       SHIFT 6                     $0 E 1 + 6                          -
+# 6     $0 E 1 + 6                              a₂*a₃$          6      a₂      SHIFT 5                     $0 E 1 + 6 a₂ 5                     -
+# 7a    $0 E 1 + 6 a₂ 5                         *a₃$            5      *       REDUCE 6 (F→a)              $0 E 1 + 6                          -
+# 7b    $0 E 1 + 6                              *a₃$            6      *       GOTO(6, F) = 3              $0 E 1 + 6 F 3                      -
+# 8a    $0 E 1 + 6 F 3                          *a₃$            3      *       REDUCE 4 (T→F)              $0 E 1 + 6                          -
+# 8b    $0 E 1 + 6                              *a₃$            6      *       GOTO(6, T) = 9              $0 E 1 + 6 T 9                      -
+# 9     $0 E 1 + 6 T 9                          *a₃$            9      *       SHIFT 7                     $0 E 1 + 6 T 9 * 7                  -
+# 10    $0 E 1 + 6 T 9 * 7                      a₃$             7      a₃      SHIFT 5                     $0 E 1 + 6 T 9 * 7 a₃ 5             -
+# 11a   $0 E 1 + 6 T 9 * 7 a₃ 5                 $               5      $       REDUCE 6 (F→a)              $0 E 1 + 6 T 9 * 7                  -
+# 11b   $0 E 1 + 6 T 9 * 7                      $               7      $       GOTO(7, F) = 10             $0 E 1 + 6 T 9 * 7 F 10             -
+# 12a   $0 E 1 + 6 T 9 * 7 F 10                 $               10     $       REDUCE 3 (T→T*F)            $0 E 1 + 6                          ✓ t₁ := a₂ * a₃
+# 12b   $0 E 1 + 6                              $               6      $       GOTO(6, T) = 9              $0 E 1 + 6 T 9                      -
+# 13a   $0 E 1 + 6 T 9                          $               9      $       REDUCE 1 (E→E+T)            $0                                  ✓ t₂ := a₁ + t₁
+# 13b   $0                                      $               0      $       GOTO(0, E) = 1              $0 E 1                              -
+# 14    $0 E 1                                  $               1      $       ACCEPT                      $0 E 1                              -
